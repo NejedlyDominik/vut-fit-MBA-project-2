@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.1//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_2.dtd'>
+<nta>
+	<declaration>// Place global declarations here.
+clock x;</declaration>
+	<template>
+		<name x="5" y="5">Vraceni_lahvi_templ</name>
+		<declaration>// Place local declarations here.</declaration>
+		<location id="id0" x="-450" y="-68">
+			<name x="-518" y="-93">pripraven</name>
+		</location>
+		<location id="id1" x="-127" y="-68">
+			<name x="-136" y="-102">v_cinnosti</name>
+			<label kind="invariant" x="-110" y="-85">x&lt;=100</label>
+		</location>
+		<location id="id2" x="-289" y="-68">
+			<name x="-357" y="-102">prijem_lahve</name>
+			<label kind="invariant" x="-323" y="-59">x&lt;=1</label>
+		</location>
+		<location id="id3" x="-25" y="34">
+			<name x="-8" y="17">timeout</name>
+			<label kind="invariant" x="-8" y="34">x&lt;=2</label>
+		</location>
+		<location id="id4" x="68" y="-68">
+			<name x="76" y="-93">vydej_dokladu</name>
+			<label kind="invariant" x="85" y="-76">x&lt;=2</label>
+		</location>
+		<location id="id5" x="-204" y="127">
+			<name x="-221" y="136">chyba</name>
+		</location>
+		<location id="id6" x="-450" y="127">
+			<name x="-493" y="101">reset</name>
+			<label kind="invariant" x="-467" y="136">x&lt;=2</label>
+			<label kind="comments" x="-748" y="187">V modelu je predpokladano, ze chyba muze nastat i behem resetu. Je vsak mozne odstranit zpetnou hranu do stavu chyba, pokud predpokladame, ze reset chybu nikdy nezpusobi.</label>
+		</location>
+		<init ref="id0"/>
+		<transition>
+			<source ref="id4"/>
+			<target ref="id0"/>
+			<nail x="-34" y="-144"/>
+			<nail x="-357" y="-144"/>
+		</transition>
+		<transition>
+			<source ref="id6"/>
+			<target ref="id0"/>
+		</transition>
+		<transition>
+			<source ref="id5"/>
+			<target ref="id6"/>
+			<label kind="assignment" x="-340" y="85">x:=0</label>
+			<nail x="-280" y="102"/>
+			<nail x="-374" y="102"/>
+		</transition>
+		<transition>
+			<source ref="id6"/>
+			<target ref="id5"/>
+		</transition>
+		<transition>
+			<source ref="id4"/>
+			<target ref="id5"/>
+			<nail x="68" y="127"/>
+		</transition>
+		<transition>
+			<source ref="id3"/>
+			<target ref="id5"/>
+		</transition>
+		<transition>
+			<source ref="id0"/>
+			<target ref="id5"/>
+		</transition>
+		<transition>
+			<source ref="id2"/>
+			<target ref="id5"/>
+		</transition>
+		<transition>
+			<source ref="id1"/>
+			<target ref="id5"/>
+		</transition>
+		<transition>
+			<source ref="id3"/>
+			<target ref="id4"/>
+			<label kind="assignment" x="17" y="-17">x:=0</label>
+		</transition>
+		<transition>
+			<source ref="id1"/>
+			<target ref="id3"/>
+			<label kind="guard" x="-76" y="-34">x==100</label>
+			<label kind="assignment" x="-102" y="-17">x:=0</label>
+		</transition>
+		<transition>
+			<source ref="id1"/>
+			<target ref="id4"/>
+			<label kind="guard" x="-51" y="-85">x&lt;100</label>
+			<label kind="assignment" x="-8" y="-85">x:=0</label>
+		</transition>
+		<transition>
+			<source ref="id1"/>
+			<target ref="id2"/>
+			<label kind="guard" x="-238" y="-127">x&lt;100</label>
+			<label kind="assignment" x="-195" y="-127">x:=0</label>
+			<nail x="-170" y="-110"/>
+			<nail x="-246" y="-110"/>
+		</transition>
+		<transition>
+			<source ref="id2"/>
+			<target ref="id1"/>
+			<label kind="assignment" x="-221" y="-85">x:=0</label>
+		</transition>
+		<transition>
+			<source ref="id0"/>
+			<target ref="id2"/>
+			<label kind="assignment" x="-382" y="-85">x:=0</label>
+		</transition>
+	</template>
+	<system>// Place template instantiations here.
+Vraceni_lahvi_proc = Vraceni_lahvi_templ();
+// List one or more processes to be composed into a system.
+system Vraceni_lahvi_proc;
+    </system>
+	<queries>
+		<query>
+			<formula>A[] not deadlock</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>A&lt;&gt; Vraceni_lahvi_proc.pripraven</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>(Vraceni_lahvi_proc.v_cinnosti and x==100) --&gt; (Vraceni_lahvi_proc.pripraven or Vraceni_lahvi_proc.chyba)</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>A[] x&gt;100 imply (Vraceni_lahvi_proc.pripraven or Vraceni_lahvi_proc.chyba)</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>E[] not (Vraceni_lahvi_proc.chyba)</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>E&lt;&gt; Vraceni_lahvi_proc.vydej_dokladu</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>E&lt;&gt; Vraceni_lahvi_proc.timeout</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>E&lt;&gt; Vraceni_lahvi_proc.reset</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>E[] (Vraceni_lahvi_proc.pripraven and x==0) or Vraceni_lahvi_proc.chyba</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>A[] not ((Vraceni_lahvi_proc.prijem_lahve and x &gt; 1) or (Vraceni_lahvi_proc.v_cinnosti and x &gt; 100) or ((Vraceni_lahvi_proc.timeout or Vraceni_lahvi_proc.vydej_dokladu or Vraceni_lahvi_proc.reset) and x &gt; 2))</formula>
+			<comment></comment>
+		</query>
+	</queries>
+</nta>

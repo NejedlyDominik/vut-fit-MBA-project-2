@@ -1,0 +1,254 @@
+\documentclass[a4paper]{article}
+\usepackage[left=10mm, total={190mm, 257mm}, top=20mm]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage[czech]{babel}
+\usepackage{amsthm}
+\usepackage{amssymb}
+\usepackage{mathtools}
+\usepackage{tikz}
+\usetikzlibrary{automata, positioning}
+\usepackage[hidelinks, colorlinks, linkcolor=blue]{hyperref}
+
+\let\pred\mathit
+
+\newtheoremstyle{task}{}{}{}{}{\bfseries}{.}{ }{\thmname{#1}\thmnumber{ #2}\thmnote{ (#3)}}
+
+\theoremstyle{task}
+\newtheorem{task}{Příklad}
+
+\tikzset{region node/.style={rounded corners, draw, align=center}}
+
+\makeatletter
+\renewcommand\maketitle{
+{\raggedright
+\begin{center}
+{\Large \bfseries \@title}\\[2ex]
+{\@author}\\[8ex]
+\end{center}}}
+\makeatother
+
+\title{Analýza systémů založená na modelech (MBA) – 2022/2023\\[0.4ex] \large Domácí úloha 2}
+\author{Domink Nejedlý (xnejed09)}
+
+\begin{document}
+
+\maketitle
+
+
+
+\begin{task}
+    Uvažujme časovaný automat $\mathcal{A}_1$ na obrázku \ref{fig:A1}.
+
+
+
+    \begin{figure}[h]
+        \centering   
+        \begin{tikzpicture}[auto]
+    
+            \node (A) [state, initial, initial text={}] {$A$};
+            \node (C) [state, above right=28mm and 14mm of A] {$\begin{gathered} C \\ x < 15 \end{gathered}$};
+            \node (B) [state, below right=28mm and 14mm of C] {$B$};
+    
+            \path[->]
+                (A)
+                    edge node [below] {$\begin{gathered} a_1 \\ x \le 1 \\ y \coloneqq 0 \end{gathered}$} (B)
+                (B)
+                    edge [loop right] node {$\begin{gathered} a_5 \\ y > 10 \\ y \coloneqq 0 \end{gathered}$} ()
+                    edge [bend left] node [above right] {$\begin{gathered} a_4 \\ x \coloneqq 0 \\ y < 10 \end{gathered}$} (C)
+                (C)
+                    edge [bend left=50] node {$\begin{gathered} a_2 \\ 1 < x < 5 \end{gathered}$} (B)
+                    edge [bend right=50] node {$\begin{gathered} a_3 \\ 1 < x < 10 \\ y \coloneqq 0 \end{gathered}$} (A)
+            ;
+        
+        \end{tikzpicture}
+        \caption{Časovaný automat $\mathcal{A}_1$}\label{fig:A1}
+    \end{figure}
+
+
+
+    \begin{itemize}
+
+
+
+        \item Automat $\mathcal{A}_1$ neobsahuje zenoběh.
+
+        \begin{proof}
+            Využijme podmínku neexistence zeno běhů. Nalezněme a prověřme tedy všechny řídící cykly -- cykly bez opakujících se hran i stavů (opakující se stav signalizuje, že cyklus v sobě obsahuje podcyklus, přičemž i ten dle podmínky neexistence zeno běhů musí obsahovat nějaké hodiny, které jsou resetovány a současně alespoň jeden krok tohoto podcyklu vyžaduje jejich běh času):
+
+            \begin{itemize}
+                \item $A \to B \to C \to A$ -- hodiny $x$ jsou resetovány a je zde podmínka $1 < x < 10$ (tento cyklus může navíc proběhnout pouze jednou -- po návratu do $A$ již nelze splnit podmínku na hraně $a_1$),
+                \item $B \to B $ -- hodiny $y$ jsou resetovány  a je zde podmínka $y > 10$,
+                \item $B \to C \to B$ -- hodiny $x$ jsou resetovány  a je zde podmínka $1 < x < 5$.
+            \end{itemize}
+
+            Podmínka neexistence zeno běhů je zřejmě pro časovaný automat $\mathcal{A}_2$ splněna -- každý řídící cyklus vyžaduje alespoň v~jednom kroku běh času hodin (zajišťuje vždy zmíněná podmínka např. $x > 1$ pro hodiny $x$), jež jsou v tomto cyklu resetovány. Z toho důvodu časovaný automat $\mathcal{A}_2$ neumožňuje zeno běhy.
+        \end{proof}
+
+
+
+        \item Automat $\mathcal{A}_1$ obsahuje timelock.
+
+        \begin{proof}
+            Uvažujme běh:
+            $$(A, x = 0, y = 0) \xrightarrow{a_1} (B, x = 0, y = 0) \xrightarrow{a_4} (C, x = 0, y = 0) \xrightarrow{10} (C, x = 10, y = 10)$$
+            Konfigurace $c = (C, x = 10, y = 10)$ je timelock, jelikož $\mathit{Paths}_\mathit{div}(c) = \emptyset$. Z této konfigurace již nelze provést žádný diskrétní krok, neboť přechod do místa $B$ podmiňuje predikát $1 < x < 5$ a přechod do místa $A$ zase predikát $1 < x < 10$. Ani jeden z těchto predikátů však nemůže být splněn, jelikož $x = 10$. Z konfigurace $c$ lze tedy provádět pouze nekonečné množství časových kroků. Ty však konvergují k číslu 15, protože místo $C$ obsahuje invariant $x < 15$. Z konfigurace $c$~tedy nelze provést žádný časově divergentní běh.
+        \end{proof}
+        
+    \end{itemize}
+\end{task}
+
+
+
+\begin{task}
+    Uvažujme časovaný automat $\mathcal{A}_2$ na obrázku \ref{fig:A2} s množinou atomických predikátů
+    $$\pred{AP} = \{\pred{init}, \pred{error}, \pred{run}\}$$
+    a funkcí $L$ definovanou následovně:
+    \begin{align*}
+        L(A) &= \{\pred{init}, \pred{run}\}, \\
+        L(D) &= \{\pred{error}\}, \\
+        L(B) &= L(C) = \{\pred{run}\}.
+    \end{align*}
+
+
+
+    \begin{figure}[h]
+        \centering   
+        \begin{tikzpicture}[node distance=30mm, auto]
+
+        \node (A) [state, initial, initial text={}] {$A$};
+        \node (B) [state, below=of A] {$B$};
+        \node (C) [state, right=of B] {$C$};
+        \node (D) [state, right=of C] {$D$};
+
+        \path[->]
+            (A)
+                edge [bend right] node [left] {$\begin{gathered} \text{volba\_kava} \\ x \coloneqq 0 \end{gathered}$} (B)
+            (B)
+                edge [bend right] node [above right] {$\begin{gathered} \text{timeout} \\ x > 1 \end{gathered}$} (A)
+                edge [bend right] node [below=-6mm] {$\begin{gathered} \text{mince} \\ 0 < x < 1 \\ y \coloneqq 0 \end{gathered}$} (C)
+            (C)
+                edge [bend right] node [above right=-6.5mm and -10mm] {$\begin{gathered} \text{chybna\_mince} \\ x \coloneqq 0 \\ y = 0 \end{gathered}$} (B)
+                edge [bend right=50] node [below right=0mm and 10mm] {$\begin{gathered} \text{vydej} \\ y = 1 \\ x \coloneqq 0 \\ y \coloneqq 0 \end{gathered}$} (A)
+                edge node [below] {$\begin{gathered} \text{chyba} \\ y > 1 \end{gathered}$} (D)
+            (D)
+                edge [bend right=60] node [below right=0mm and 20mm] {$\begin{gathered} \text{reset} \\ x \coloneqq 0 \\ y \coloneqq 0 \end{gathered}$} (A)
+        ;
+    
+        \end{tikzpicture}
+        \caption{Časovaný automat $\mathcal{A}_2$}\label{fig:A2}
+    \end{figure}
+
+
+
+    \begin{itemize}
+
+
+
+        \item Abstrakce založená na regionech (obrázek \ref{fig:A2-region-abstraction}):
+
+
+
+        \begin{figure}[h!]
+            \centering   
+            \begin{tikzpicture}[node distance=22mm, auto]
+    
+            \node (Bxe0ye0) [region node, fill=blue!10] {$\begin{gathered} B \\ x = 0, y = 0 \end{gathered}$};
+            \node (Bxe0lyl1) [region node, right=of Bxe0ye0, fill=blue!10] {$\begin{gathered} B \\ x = 0, 0 < y < 1 \end{gathered}$};
+            \node (Bxe0ye1) [region node, right=of Bxe0lyl1, fill=blue!10] {$\begin{gathered} B \\ x = 0, y = 1 \end{gathered}$};
+            \node (Bxe0yg1) [region node, right=of Bxe0ye1, fill=blue!10] {$\begin{gathered} B \\ x = 0, y > 1 \end{gathered}$};
+            \node (Axe0ye0) [region node, above right=30mm and 0mm of Bxe0lyl1, fill=green!10] {$\begin{gathered} A \\ x = 0, y = 0 \end{gathered}$};
+            \node (Axg1yg1) [region node, below right=30mm and 0mm of Bxe0ye1, fill=green!10] {$\begin{gathered} A \\ x > 1, y > 1 \end{gathered}$};
+            \node (C0lxl1ye0) [region node, below right=30mm and 0mm of Bxe0ye0, fill=yellow!10] {$\begin{gathered} C \\ 0 < x < 1, y = 0 \end{gathered}$};
+            \node (Dxg1yg1) [region node, below right=50mm and 0mm of Bxe0lyl1,  fill=red!10] {$\begin{gathered} D \\ x > 1, y > 1 \end{gathered}$};
+    
+            \path[->]
+                (Axe0ye0)
+                    edge [bend right] node [above left] {volba\_kava} (Bxe0ye0)
+                    edge [bend right] node {volba\_kava} (Bxe0lyl1)
+                    edge [bend left] node {volba\_kava} (Bxe0ye1)
+                    edge [bend left] node {volba\_kava} (Bxe0yg1)
+                (Bxe0ye0)
+                    edge [bend right=80] node [above right] {mince} (C0lxl1ye0)
+                    edge [bend right] node [above right=-2mm and 4mm] {timeout} (Axg1yg1)
+                (Bxe0lyl1)
+                    edge [bend right] node [right] {mince} (C0lxl1ye0)
+                    edge [bend right=20] node [above left=15mm and 19mm] {timeout} (Axg1yg1)
+                (Bxe0ye1)
+                    edge [bend left=20] node [above right=7mm and 11mm] {mince} (C0lxl1ye0)
+                    edge [bend left] node [left] {timeout} (Axg1yg1)
+                (Bxe0yg1)
+                    edge [bend left] node [above right=7mm and 2mm] {mince} (C0lxl1ye0)
+                    edge [bend left=80] node [above left] {timeout} (Axg1yg1)
+                (Axg1yg1)
+                    edge [bend left=4] node [below right] {volba\_kava} (Bxe0yg1)
+                (C0lxl1ye0)
+                    edge [bend right=4] node [left] {chybna\_mince} (Bxe0ye0)
+                    edge [bend left=52] node {vydej} (Axe0ye0)
+                    edge [bend right] node [below] {chyba} (Dxg1yg1)
+                (Dxg1yg1)
+                    edge node [above left=10mm and 0mm] {reset} (Axe0ye0)
+            ;
+        
+            \end{tikzpicture}
+            \caption{Abstrakce založená na regionech časovaného automatu $\mathcal{A}_2$}\label{fig:A2-region-abstraction}
+        \end{figure}
+
+
+
+        \item Stav, ve kterém platí predikát $\pred{error}$, je dostupný.
+
+        \begin{proof}
+            Existuje totiž např. běh:
+            $$(A, x = 0, y = 0) \xrightarrow{\text{volba\_kava}} (B, x = 0, y = 0) \xrightarrow{0.5, \text{mince}} (C, x = 0.5, y = 0) \xrightarrow{1.5, \text{chyba}} (D, x = 2, y = 1.5),$$
+            kde $A \in \mathit{Loc}_0$ je počáteční stav a $\pred{error} \in L(D)$. Dostupnost lze také vidět přímo v regionové abstrakci.
+        \end{proof}
+
+
+
+        \item Tvrzení $\mathcal{A}_2 \models \exists (\pred{run}\, U^{(3, 4)}\, \pred{error})$ platí.
+        
+        \begin{proof}
+            Nechť $\phi \equiv \pred{run}\, U^{(3, 4)}\, \pred{error}$ a $\tau \in \mathbb{R}^+$. Zřejmě $\mathit{Init}_{\mathcal{A}_2} = \{c_0 = (A, x = 0, y = 0)\}$. Uvažujme časově divergentní cestu
+            \begin{multline*}
+            \pi = (A, x = 0, y = 0) \xrightarrow{\text{volba\_kava}} (B, x = 0, y = 0) \xrightarrow{0.4, \text{mince}} (C, x = 0.4, y = 0) \xrightarrow{3.1, \text{chyba}} (D, x = 3.5, y = 3.1)\\
+            \xrightarrow{\tau} (D, x = 3.5 + \tau, y = 3.1 + \tau) \xrightarrow{\tau} \dots \in \mathit{Paths}_\mathit{div}(c_0).
+            \end{multline*}
+            Jistě platí, že $\pi \models \phi$, neboť existuje časový okamžik $t = 0.4 + 3.1 = 3.5$ z intervalu $(3, 4)$ ($t \in (3, 4)$), ve kterém platí formule $\pred{error}$ ($\pred{error} \in L(D)$) a pro libovolný časový okamžik menší než $t$ platí formule $\pred{run} \lor \pred{error}$. Zřejmě tedy také platí, že $c_0 \models \exists \phi$ (existuje cesta $\pi \in \mathit{Paths}_\mathit{div}(c_0)$, pro kterou platí, že $\pi \models \phi$) a~$\mathit{Init}_{\mathcal{A}_2} \subseteq \mathit{Sat(\exists \phi)}$. Z toho důvodu časovaný automat $\mathcal{A}_2$ splňuje formuli $\exists (\pred{run}\, U^{(3, 4)}\, \pred{error})$ (tj. $\mathcal{A}_2 \models \exists \phi$).
+        \end{proof}
+
+
+
+        \item Tvrzení $(B, x = 3, y = 0.5) \models \forall (\pred{true}\, U^{<2}\, \pred{init})$ neplatí.
+
+        \begin{proof}
+            Nechť $\phi \equiv \pred{true}\, U^{<2}\, \pred{init}$, $c_0 = (B, x = 3, y = 0.5)$ a $\tau \in \mathbb{R}^+$. Uvažujme časově divergentní cestu
+            $$
+            \pi = (B, x = 3, y = 0.5) \xrightarrow{3} (B, x = 6, y = 3.5) \xrightarrow{\tau} (B, x = 6 + \tau, y = 3.5 + \tau) \xrightarrow{\tau} \dots \in \mathit{Paths}_\mathit{div}(c_0).
+            $$
+            Tvrzení $\pi \models \phi$ zřejmě neplatí, neboť neexistuje žádný časový okamžik $t$ z intervalu $\langle 0, 2)$, ve kterém by platila formule $\pred{init}$. Z toho důvodu nemůže platit ani tvrzení $c_0 \models \forall \phi$ (tj. $(B, x = 3, y = 0.5) \models \forall (\pred{true}\, U^{<2}\, \pred{init})$), jelikož to vyžaduje, aby pro každou cestu $\pi' \in \mathit{Paths}_\mathit{div}(c_0)$ tvrzení $\pi' \models \phi$ platilo.
+        \end{proof}
+
+
+
+        \item Tvrzení $\mathcal{A}_2 \models \exists \diamond (\pred{error} \land x = 2)$ platí.
+
+        \begin{proof}
+            Nechť $\phi \equiv \diamond (\pred{error} \land x = 2)$ a $\tau \in \mathbb{R}^+$. Zřejmě $\mathit{Init}_{\mathcal{A}_2} = \{c_0 = (A, x = 0, y = 0)\}$. Uvažujme časově divergentní cestu
+            \begin{multline*}
+            \pi = (A, x = 0, y = 0) \xrightarrow{\text{volba\_kava}} (B, x = 0, y = 0) \xrightarrow{0.5, \text{mince}} (C, x = 0.5, y = 0) \xrightarrow{1.5, \text{chyba}} (D, x = 2, y = 1.5)\\
+            \xrightarrow{\tau} (D, x = 2 + \tau, y = 1.5 + \tau) \xrightarrow{\tau} \dots \in \mathit{Paths}_\mathit{div}(c_0).
+            \end{multline*}
+            Jistě platí, že $\pi \models \phi$, neboť existuje časový okamžik $t = 0.5 + 1.5 = 2 \in \langle 0, \infty)$, ve kterém platí formule $\pred{error} \land x = 2$. Zřejmě tedy též platí, že $c_0 \models \exists \phi$ (existuje cesta $\pi \in \mathit{Paths}_\mathit{div}(c_0)$, pro kterou platí, že $\pi \models \phi$) a $\mathit{Init}_{\mathcal{A}_2} \subseteq \mathit{Sat(\exists \phi)}$. Z~toho důvodu časovaný automat $\mathcal{A}_2$ splňuje formuli $\exists \diamond (\pred{error} \land x = 2)$ (tj. $\mathcal{A}_2 \models \exists \phi$).
+        \end{proof}
+
+
+        
+    \end{itemize}
+
+
+    
+\end{task}
+
+
+
+\end{document}
